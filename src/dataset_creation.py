@@ -5,7 +5,7 @@ from scipy.signal import chirp
 from scipy.signal import stft
 
 
-def main(path, noise=False):
+def main(path):
     """
 
     """
