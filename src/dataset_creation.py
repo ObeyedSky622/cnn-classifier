@@ -1,14 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import shutil
+import pathlib
 from scipy.signal import chirp
-from scipy.signal import stft
 
 
-def main(path):
+def make_subset(subset_name, new_base_dir, original_dir, start_index, end_index):
+    for category in ("lin", "quad"):
+        dir = new_base_dir / subset_name / category
+        os.makedirs(dir)
+        fnames = [f"{category}_{i}_{j}.png" for j in range(
+            start_index, end_index) for i in range(50)]
+        for fname in fnames:
+            shutil.copyfile(src=original_dir / fname,
+                            dst=dir / fname)
+
+
+def create_data(path):
     """
 
     """
+    os.makedirs(path)
     print(f"saving dataset to {path} from {os.getcwd()}")
     np.random.RandomState(42)
     inits = [250, 500, 750, 1000, 500, 500, 1000, 2000, 5000, 2250]
@@ -52,8 +65,23 @@ def main(path):
             plt.close()
             j += 1
 
+    # created all images
+    print("Images Complete")
+
+    # now we need to move images into new directories for easier loading
+    new_base_dir = pathlib.Path("lin_vs_quad")
+    original_dir = pathlib.Path("data")
+
+    # 0 -> 4 for train
+    make_subset("train", new_base_dir, original_dir, 0, 5)
+
+    # 5 -> 6 for validation
+    make_subset("validation", new_base_dir, original_dir, 5, 7)
+
+    # 7 -> 9 for test
+    make_subset("test", new_base_dir, original_dir, 7, 10)
     print("Dataset Complete")
 
 
 if __name__ == "__main__":
-    main("data/", False)
+    create_data("data/")
