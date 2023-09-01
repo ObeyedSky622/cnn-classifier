@@ -99,82 +99,64 @@ def gen_custom_model():
     # model.add(Dense(1, activation='sigmoid'))
     # model.compile(loss="binary_crossentropy",
     #               optimizer="rmsprop", metrics=["accuracy"])
-    # model.summary()
+    # model.summary()' 
+    data_augmentation = keras.Sequential([
+        layers.RandomFlip("horizontal"), 
+        layers.RandomRotation(0.1),
+    ])
     inputs = keras.Input(shape=(128, 128, 3))
-    x = Rescaling(1./255)(inputs)
-    x = Conv2D(filters=32, kernel_size=7, activation="relu")(x)
-    x = MaxPooling2D(pool_size=2)(x)
-    x = Dropout(0.5)(x)
-    # x = Conv2D(filters=64, kernel_size=3, activation="relu")(x)
-    # x = MaxPooling2D(pool_size=2)(x)
-    # x = Conv2D(filters=128, kernel_size=3, activation="relu")(x)
-    # x = MaxPooling2D(pool_size=2)(x)
-    # x = Conv2D(filters=256, kernel_size=3, activation="relu")(x)
-    # x = MaxPooling2D(pool_size=2)(x)
-    # x = Conv2D(filters=256, kernel_size=3, activation="relu")(x)
+    x = data_augmentation(inputs)
+    x = Rescaling(1./255)(x)
+    x = Conv2D(filters=6, kernel_size=7, activation="relu", kernel_regularizer=L1(0.002))(x)
+    x = MaxPooling2D()(x)
     x = Flatten()(x)
+    
+    x = Dropout(0.8)(x)
     outputs = layers.Dense(1, activation="sigmoid")(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     model.compile(loss="binary_crossentropy",
-                  optimizer="rmsprop", metrics=["accuracy"])
+                  optimizer="adam", metrics=["accuracy"])
     return model
 
 
 def main():
     # path to img directory
-
+    tf.random.set_seed(0)
     dataset_path = pathlib.Path("lin_vs_quad")
     
-    # train_dataset = image_dataset_from_directory(
-    #     dataset_path / "train", image_size=(128, 128), batch_size=16, shuffle=False)
+    train_dataset = image_dataset_from_directory(
+        dataset_path / "train", image_size=(128, 128), batch_size=4)
 
     validation_dataset = image_dataset_from_directory(
-        dataset_path / "validation", image_size=(128, 128), batch_size=16)
+        dataset_path / "validation", image_size=(128, 128), batch_size=4)
 
-    # test_dataset = image_dataset_from_directory(
-    #     dataset_path / "test", image_size=(128, 128), batch_size=16)
+    test_dataset = image_dataset_from_directory(
+        dataset_path / "test", image_size=(128, 128), batch_size=4)
 
-    # model = gen_custom_model()
-    # print("Model Generated!")
-    iterator = iter(validation_dataset)
+    model = gen_custom_model()
+    print("Model Generated!")
     
-    first_batch_and_labels  = iterator.get_next()
-    
-    
-    first_batch = first_batch_and_labels[0].numpy()
-    
-    first_im = first_batch[0, :, :, :]
-    
-    img_from_dir = cv2.imread("lin_vs_quad/validation/lin/lin_0_5.png")
-    img_from_dir = cv2.resize(img_from_dir, (128,128))
-    cv2.imshow("",first_im)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # train the model
+    print("==============Begin Model Training==================")
+    history = model.fit(train_dataset, validation_data=(
+        validation_dataset), epochs=20)
+    model.evaluate(test_dataset)
+
+    accuracy = history.history["accuracy"]
+    val_accuracy = history.history["val_accuracy"]
+    loss = history.history["loss"]
+    val_loss = history.history["val_loss"]
+    epochs = range(1, len(accuracy) + 1)
+    plt.plot(epochs, accuracy, "bo", label="Training accuracy")
+    plt.plot(epochs, val_accuracy, "b", label="Validation accuracy")
+    plt.title("Training and validation accuracy")
+    plt.legend()
     plt.figure()
-    plt.imshow(img_from_dir)
+    plt.plot(epochs, loss, "bo", label="Training loss")
+    plt.plot(epochs, val_loss, "b", label="Validation loss")
+    plt.title("Training and validation loss")
+    plt.legend()
     plt.show()
-    print()
-    # # train the model
-    # print("==============Begin Model Training==================")
-    # history = model.fit(train_dataset, validation_data=(
-    #     validation_dataset), epochs=10)
-    # model.evaluate(test_dataset)
-
-    # accuracy = history.history["accuracy"]
-    # val_accuracy = history.history["val_accuracy"]
-    # loss = history.history["loss"]
-    # val_loss = history.history["val_loss"]
-    # epochs = range(1, len(accuracy) + 1)
-    # plt.plot(epochs, accuracy, "bo", label="Training accuracy")
-    # plt.plot(epochs, val_accuracy, "b", label="Validation accuracy")
-    # plt.title("Training and validation accuracy")
-    # plt.legend()
-    # plt.figure()
-    # plt.plot(epochs, loss, "bo", label="Training loss")
-    # plt.plot(epochs, val_loss, "b", label="Validation loss")
-    # plt.title("Training and validation loss")
-    # plt.legend()
-    # plt.show()
 
 
 main()
