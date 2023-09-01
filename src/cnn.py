@@ -125,13 +125,13 @@ def main():
     dataset_path = pathlib.Path("lin_vs_quad")
     
     train_dataset = image_dataset_from_directory(
-        dataset_path / "train", image_size=(128, 128), batch_size=4)
+        dataset_path / "train", image_size=(128, 128), batch_size=32)
 
     validation_dataset = image_dataset_from_directory(
-        dataset_path / "validation", image_size=(128, 128), batch_size=4)
+        dataset_path / "validation", image_size=(128, 128), batch_size=32)
 
     test_dataset = image_dataset_from_directory(
-        dataset_path / "test", image_size=(128, 128), batch_size=4)
+        dataset_path / "test", image_size=(128, 128), batch_size=32)
 
     model = gen_custom_model()
     print("Model Generated!")
